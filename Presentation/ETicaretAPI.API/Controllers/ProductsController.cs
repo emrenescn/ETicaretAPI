@@ -10,22 +10,28 @@ namespace ETicaretAPI.API.Controllers
     {
         private readonly IProductWriteRepository _writeRepository;
         private readonly IProductReadRepository _readRepository;
+        private readonly IOrderWriteRepository _orderWriteRepository;
+        private readonly ICustomerWriteRepository _customerWriteRepository;
 
-        public ProductsController(IProductWriteRepository writeRepository, IProductReadRepository readRepository)
+        public ProductsController(IProductWriteRepository writeRepository, IProductReadRepository readRepository, IOrderWriteRepository orderWriteRepository, ICustomerWriteRepository customerWriteRepository)
         {
             _writeRepository = writeRepository;
             _readRepository = readRepository;
+            _orderWriteRepository = orderWriteRepository;
+            _customerWriteRepository = customerWriteRepository;
         }
+        
         [HttpGet]
-        public async void Get()
+        public async Task Get()
         {
-            _writeRepository.AddRangeAsync(new()
-            {
-                new(){Id=Guid.NewGuid(),Name="Product1",Price=100,CreatedDate=DateTime.UtcNow,Stock=5},
-                new(){Id=Guid.NewGuid(),Name="Product2",Price=200,CreatedDate=DateTime.UtcNow,Stock=4},
-                new(){Id=Guid.NewGuid(),Name="Product3",Price=300,CreatedDate=DateTime.UtcNow,Stock=3}
-            });
-            await _writeRepository.SaveAsync();
+            var customerId=Guid.NewGuid();
+            await _customerWriteRepository.AddAsync(new() { Id = customerId,Name="Memati" });
+            await _orderWriteRepository.AddRangeAsync(new() {
+                new()
+                { Description = "bombapbarabumbumpop",
+                    Address = "Mersin",CustomerId=customerId},
+            new(){Description="barabarabarabereberebere",Address="Kayseri",CustomerId=customerId}});
+            await _orderWriteRepository.SaveAsync();
         }
 
 
