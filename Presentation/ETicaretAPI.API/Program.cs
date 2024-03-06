@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddPersistenceService();
 builder.Services.AddCors(options => options.AddDefaultPolicy(
-    policy => policy.WithOrigins("https://localhost:7227").AllowAnyHeader().AllowAnyMethod()
+    policy => policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()
     )) ;
 
 builder.Services.AddControllers();
