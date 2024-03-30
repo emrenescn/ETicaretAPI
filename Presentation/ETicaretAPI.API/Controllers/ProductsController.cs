@@ -6,6 +6,7 @@ using ETicaretAPI.Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
 
 
 namespace ETicaretAPI.API.Controllers
@@ -106,30 +107,18 @@ namespace ETicaretAPI.API.Controllers
             return Ok();
         }
         [HttpPost("[action]")]
-        public async Task<IActionResult> Upload()
+        public async Task<IActionResult> Upload(string id)
         {
-            var datas = await _storageService.UploadAsync("files",Request.Form.Files);
-            //var datas = await _fileService.UploadAsync("resource/files", Request.Form.Files);
-            await _productImageFileWriteRepository.AddRangeAsync(datas.Select(datas => new ProductImageFile()
+            List<(string fileName,string pathOrContainerName)>result=await _storageService.UploadAsync("photo-images", Request.Form.Files);
+            Product product = await _productReadRepository.GetByIdAsync(id);
+            await _productImageFileWriteRepository.AddRangeAsync(result.Select(r => new ProductImageFile
             {
-                FileName = datas.fileName,
-                Path = datas.pathOrContainerName,
-                Storage=_storageService.StorageName
+                FileName = r.fileName,
+                Path = r.pathOrContainerName,
+                Storage = _storageService.StorageName,
+                Products=new List<Product> { product}
             }).ToList());
             await _productImageFileWriteRepository.SaveAsync();
-            //await _invoiceFileWriteRepository.AddRangeAsync(datas.Select(datas => new InvoiceFile()
-            //{
-            //    FileName = datas.fileName,
-            //    Path = datas.path,
-            //    Price=new Random().Next()
-            //}).ToList());
-            //await _invoiceFileWriteRepository.SaveAsync();
-            //await _fileWriteRepository.AddRangeAsync(datas.Select(datas => new Domain.Entities.File()
-            //{
-            //    FileName = datas.fileName,
-            //    Path = datas.path,
-            //}).ToList());
-            //await _fileWriteRepository.SaveAsync();
             return Ok();
         }
     }
