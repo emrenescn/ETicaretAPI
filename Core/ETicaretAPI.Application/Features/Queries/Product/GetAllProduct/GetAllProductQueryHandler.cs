@@ -7,12 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ETicaretAPI.Application.Features.Queries.GetAllProduct
+namespace ETicaretAPI.Application.Features.Queries.Product.GetAllProduct
 {
     public class GetAllProductQueryHandler : IRequestHandler<GetAllProductQueryRequest, GetAllProductQueryResponse>
     {
         readonly IProductReadRepository _productReadRepository;
-        
+
         public GetAllProductQueryHandler(IProductReadRepository productReadRepository)
         {
             _productReadRepository = productReadRepository;
@@ -35,7 +35,7 @@ namespace ETicaretAPI.Application.Features.Queries.GetAllProduct
                 TotalCount = totalCount
 
             };
-            
+
         }
     }
 }
