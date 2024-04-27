@@ -6,6 +6,7 @@ using ETicaretAPI.Application.Features.Commands.ProductImage.RemoveProductImage;
 using ETicaretAPI.Application.Features.Commands.ProductImage.UploadProductImage;
 using ETicaretAPI.Application.Features.Queries.Product.GetAllProduct;
 using ETicaretAPI.Application.Features.Queries.Product.GetByIdProduct;
+using ETicaretAPI.Application.Features.Queries.ProductImageFile.GetProductImages;
 using ETicaretAPI.Application.Repositories;
 using ETicaretAPI.Application.RequestParameters;
 using ETicaretAPI.Application.ViewModels.Products;
@@ -77,7 +78,7 @@ namespace ETicaretAPI.API.Controllers
             return Ok(response);
         }
         [HttpPost]
-        public async Task<IActionResult> Post(CreateProductCommandRequest createProductCommandRequest)
+        public async Task<IActionResult> Post([FromBody]CreateProductCommandRequest createProductCommandRequest)
         {
             CreateProductCommandResponse response= await _mediator.Send(createProductCommandRequest);
             return Ok(response);
@@ -101,16 +102,11 @@ namespace ETicaretAPI.API.Controllers
             UploadProductImageCommandResponse response = await _mediator.Send(uploadProductImageCommandRequest);
             return Ok();
         }
-        [HttpGet("[action]/{id}")]
-        public async Task<IActionResult> GetProductImages(string id)
+        [HttpGet("[action]/{Id}")]
+        public async Task<IActionResult> GetProductImages([FromRoute]GetProductImagesQueryRequest getProductImagesQueryRequest)
         {
-            Product? product=await _productReadRepository.Table.Include(p => p.ProductImageFiles).FirstOrDefaultAsync(p => p.Id == Guid.Parse(id));
-            return Ok(product.ProductImageFiles.Select(p => new
-            {
-                Path = $"{_configuration["BaseStroageUrl"]}/{p.Path}",
-               p.FileName,
-               p.Id
-            })) ;
+            List<GetProductImagesQueryResponse> response= await _mediator.Send(getProductImagesQueryRequest);
+            return Ok(response);
         }
         [HttpDelete("[action]/{Id}")]
         public async Task<IActionResult> DeleteProductImage([FromRoute]RemoveProductImageCommandRequest removeProductImageCommandRequest, [FromQuery]string ImageId)
