@@ -16,6 +16,6 @@ namespace ETicaretAPI.Application.Features.Commands.AppUser.GoogleLogin
         public string LastName { get; set; }
         public string Email { get; set; }
         public string PhotoUrl { get; set; }
-        public string Providers = "GOOGLE";
+        public string Provider { get; set; }
     }
 }
