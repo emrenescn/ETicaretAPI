@@ -20,12 +20,12 @@ namespace ETicaretAPI.Infrastructure.Services.Token
             _configuration = configuration;
         }
 
-        public Application.DTOs.Token CreateAccessToken(int minutes)
+        public Application.DTOs.Token CreateAccessToken(int second)
         {
             Application.DTOs.Token token = new();
             SymmetricSecurityKey securityKey = new(Encoding.UTF8.GetBytes(_configuration["Token:SecurityKey"]));
             SigningCredentials credentials = new(securityKey, SecurityAlgorithms.HmacSha256);
-            token.Expiration=DateTime.UtcNow.AddMinutes(minutes);
+            token.Expiration=DateTime.UtcNow.AddSeconds(second);
             JwtSecurityToken securityToken = new(
                 audience: _configuration["Token:Audience"],
                 issuer: _configuration["Token:Issuer"],
@@ -35,8 +35,15 @@ namespace ETicaretAPI.Infrastructure.Services.Token
                 );
             JwtSecurityTokenHandler tokenHandler = new();
             token.AccessToken=tokenHandler.WriteToken(securityToken);
+            token.RefreshToken = CreateRefreshToken();
             return token;
-
+        }
+        public string CreateRefreshToken()
+        {
+            byte[] number=new byte[32];
+            using RandomNumberGenerator random = RandomNumberGenerator.Create();
+            random.GetBytes(number);
+            return Convert.ToBase64String(number);
         }
     }
 }
