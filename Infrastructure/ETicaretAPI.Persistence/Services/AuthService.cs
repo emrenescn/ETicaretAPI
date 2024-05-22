@@ -119,8 +119,8 @@ namespace ETicaretAPI.Persistence.Services
           AppUser? user=await  _userManager.Users.FirstOrDefaultAsync(u => u.RefreshToken == refreshToken);
             if (user != null && user?.RefreshTokenEndDate > DateTime.UtcNow)
             {
-                Token token = _tokenHandler.CreateAccessToken(15, user);
-                await _userService.UpdateRefreshToken(refreshToken, user, token.Expiration, 15);
+                Token token = _tokenHandler.CreateAccessToken(900, user);
+                await _userService.UpdateRefreshToken(refreshToken, user, token.Expiration, 300);
                 return token;
             }
             else

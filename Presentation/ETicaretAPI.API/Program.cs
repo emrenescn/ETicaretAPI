@@ -7,6 +7,7 @@ using ETicaretAPI.Infrastructure.Filters;
 using ETicaretAPI.Infrastructure.Services.Storage.Azure;
 using ETicaretAPI.Infrastructure.Services.Storage.Local;
 using ETicaretAPI.Persistence;
+using ETicaretAPI.SignalR;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
@@ -24,40 +25,41 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddPersistenceServices();
 builder.Services.AddInfrastructureServices();
 builder.Services.AddApplicationServices();
+builder.Services.AddSignalRServices();
 //builder.Services.AddStorage<LocalStorage>();
 builder.Services.AddStorage<AzureStorage>();
 builder.Services.AddCors(options => options.AddDefaultPolicy(
-    policy => policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()
+    policy => policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod().AllowCredentials()
     )) ;
 
-Logger logger = new LoggerConfiguration()
-    .WriteTo.Console()
-    .WriteTo.File("logs/log.txt")
-    .WriteTo.PostgreSQL(builder.Configuration.GetConnectionString("PostgreSQL"), "logs",needAutoCreateTable: true,
-    columnOptions: new Dictionary<string,ColumnWriterBase>{
-         {"message",new RenderedMessageColumnWriter()},
-        {"message_templete",new MessageTemplateColumnWriter()},
-        {"level",new LevelColumnWriter()},
-        {"time_stamp",new TimestampColumnWriter()},
-        {"exception",new ExceptionColumnWriter()},
-        {"log_event",new LogEventSerializedColumnWriter()},
-        {"user_name",new UserNameColumnWriter()}
-     })
-    .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"])
-    .Enrich.FromLogContext()
-    .MinimumLevel.Information()
-    .CreateLogger();
-builder.Host.UseSerilog(logger);
-builder.Services.AddHttpLogging(logging =>
-{
-    logging.LoggingFields = HttpLoggingFields.All;
-    logging.RequestHeaders.Add("sec-ch-ua");
-    logging.ResponseHeaders.Add("MyResponseHeader");
-    logging.MediaTypeOptions.AddText("application/javascript");
-    logging.RequestBodyLogLimit = 4096;
-    logging.ResponseBodyLogLimit = 4096;
-    logging.CombineLogs = true;
-});
+//Logger logger = new LoggerConfiguration()
+//    .WriteTo.Console()
+//    .WriteTo.File("logs/log.txt")
+//    .WriteTo.PostgreSQL(builder.Configuration.GetConnectionString("PostgreSQL"), "logs",needAutoCreateTable: true,
+//    columnOptions: new Dictionary<string,ColumnWriterBase>{
+//         {"message",new RenderedMessageColumnWriter()},
+//        {"message_templete",new MessageTemplateColumnWriter()},
+//        {"level",new LevelColumnWriter()},
+//        {"time_stamp",new TimestampColumnWriter()},
+//        {"exception",new ExceptionColumnWriter()},
+//        {"log_event",new LogEventSerializedColumnWriter()},
+//        {"user_name",new UserNameColumnWriter()}
+//     })
+//    .WriteTo.Seq(builder.Configuration["Seq:ServerUrl"])
+//    .Enrich.FromLogContext()
+//    .MinimumLevel.Information()
+//    .CreateLogger();
+//builder.Host.UseSerilog(logger);
+//builder.Services.AddHttpLogging(logging =>
+//{
+//    logging.LoggingFields = HttpLoggingFields.All;
+//    logging.RequestHeaders.Add("sec-ch-ua");
+//    logging.ResponseHeaders.Add("MyResponseHeader");
+//    logging.MediaTypeOptions.AddText("application/javascript");
+//    logging.RequestBodyLogLimit = 4096;
+//    logging.ResponseBodyLogLimit = 4096;
+//    logging.CombineLogs = true;
+//});
 
 builder.Services.AddControllers(options=>options.Filters.Add<ValidationFilter>())
     .AddFluentValidation(configuration=>configuration.RegisterValidatorsFromAssemblyContaining<CreateProductValidator>())
@@ -80,7 +82,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Token:SecurityKey"])),
             LifetimeValidator = (notBefore,expires,securityToken,validationParameters) => expires!=null ? expires>DateTime.UtcNow:false,
             NameClaimType=ClaimTypes.Name
-
         };
     });
 
@@ -95,19 +96,19 @@ if (app.Environment.IsDevelopment())
 }
 app.ConfigureExceptionHandler<Program>(app.Services.GetRequiredService<ILogger<Program>>());
 app.UseStaticFiles();
-app.UseSerilogRequestLogging();
+//app.UseSerilogRequestLogging();
 
-app.UseHttpLogging();
+//app.UseHttpLogging();
 app.UseCors();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
-app.Use(async(context, next) =>
-{
-    var userName = context.User?.Identity?.IsAuthenticated != null || true ? context.User.Identity.Name : null;
-    LogContext.PushProperty("user_name",userName);
-    await next();
-});
+//app.Use(async(context, next) =>
+//{
+//    var userName = context.User?.Identity?.IsAuthenticated != null || true ? context.User.Identity.Name : null;
+//    LogContext.PushProperty("user_name",userName);
+//    await next();
+//});
 app.MapControllers();
-
+app.MapHubs();
 app.Run();
